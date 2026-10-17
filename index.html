@@ -1,221 +1,101 @@
 <!DOCTYPE html>
-<html lang="id"><head><meta charset="utf-8">
+<html lang="id">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Aktivitas Sales</title>
 <style>
-:root{--bg:#f4f6f9;--card:#fff;--tx:#1b2430;--mu:#667085;--bd:#e0e4ea;--pr:#1f6feb;--ok:#12a150;--wa:#d9822b;--no:#d92d20;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#10141a;--card:#1a212b;--tx:#e8ecf2;--mu:#98a2b3;--bd:#2c3644;--pr:#5b9bff}}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#10141a;--card:#1a212b;--tx:#e8ecf2;--mu:#98a2b3;--bd:#2c3644;--pr:#5b9bff}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-#app{max-width:980px;margin:0 auto;padding:14px}
-h1{font-size:20px;margin:0 0 8px}h3{margin:0 0 8px;font-size:16px}h4{margin:0 0 6px;font-size:14px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
-label{display:block;font-size:12px;color:var(--mu);margin:8px 0 3px}
-input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
-textarea{min-height:60px}
-button{padding:9px 14px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font:inherit;cursor:pointer;margin:6px 6px 0 0}
-button.pr{background:var(--pr);border-color:var(--pr);color:#fff}
-button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
-button.dg{color:var(--no)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.row>select,.row>input{flex:1;min-width:140px}
-.st{display:flex;gap:4px}.st button{margin:0;width:40px;padding:0;font-size:20px}.st input{text-align:center}
-.tot{margin:10px 0;padding:8px 10px;border-radius:8px;background:var(--bg);font-size:16px}
-.mu{color:var(--mu);font-size:13px;margin:4px 0}
-.bl{display:flex;justify-content:space-between;font-size:13px;margin-top:6px}
-.bar{height:8px;border-radius:5px;background:var(--bd);overflow:hidden}.bar i{display:block;height:100%}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.cards .card{margin:0}
-.big{font-size:30px;font-weight:700}
-.sc{overflow-x:auto}
-table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
-th,td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
-th{color:var(--mu);font-weight:600}
-.ent{border-top:1px solid var(--bd);padding:8px 0}
-.nt{display:flex;gap:6px;margin-bottom:6px}.nt select{width:130px;flex:none}.nt button{margin:0}summary{cursor:pointer}.tabs{display:flex;flex-wrap:wrap;margin-bottom:8px}
-summary{cursor:pointer}.slot{padding:10px 14px}.sm{font-size:12px}
-summary{cursor:pointer;padding:2px 0}details.card{padding:10px 14px}
-</style></head>
-<body><div id="app"><p class="mu">Memuat…</p></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script>
-const FIREBASE_CONFIG={apiKey:"ISI_API_KEY",authDomain:"ISI_PROJECT_ID.firebaseapp.com",projectId:"ISI_PROJECT_ID",storageBucket:"ISI_PROJECT_ID.appspot.com",messagingSenderId:"ISI",appId:"ISI_APP_ID"};
-const $=s=>document.querySelector(s),app=$('#app');
-const TYPES=[['ekspansi','Ekspansi'],['probing','Probing'],['presentasi','Presentasi'],['closing','Closing'],['maintenance','Maintenance']];
-const T0={callDay:10,callWeek:50,visitDay:3,visitWeek:15,pagu:300000,kmDiv:12,rpKm:10000,callMonth:200,visitMonth:60};
-const DEF={members:['M. Izzat','Vacant Retail','Dwi Prakoso','Azmi Hanif','Kevin'].map((n,i)=>({id:'m'+(i+1),name:n,pin:'1234'})),adminPin:'0000',targets:Object.assign({},T0)};
-let LOADED=false,S={cfg:JSON.parse(JSON.stringify(DEF)),entries:[]},db=null,me=null,LIVE=null,W={mid:null,d:today()},A={tab:'dash',p:'week',d:today()};
-function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function today(){return ymd(new Date())}
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const rp=n=>'Rp '+new Intl.NumberFormat('id-ID').format(n);
-const pct=(v,t)=>t?Math.round(v/t*100):0;
-const bbmRaw=km=>Math.round(km/S.cfg.targets.kmDiv*S.cfg.targets.rpKm);
-const bbm=km=>Math.min(S.cfg.targets.pagu,bbmRaw(km));
-const mname=id=>(S.cfg.members.find(m=>m.id===id)||{name:'(anggota dihapus)'}).name;
-function rng(p,d){const t=new Date(d+'T00:00:00');let a,b;
- if(p==='day')a=b=t;
- else if(p==='week'){a=new Date(t);a.setDate(t.getDate()-(t.getDay()+6)%7);b=new Date(a);b.setDate(a.getDate()+6)}
- else{a=new Date(t.getFullYear(),t.getMonth(),1);b=new Date(t.getFullYear(),t.getMonth()+1,0)}
- return[ymd(a),ymd(b),a,b]}
-function wdays(a,b){let n=0;for(let x=new Date(a);x<=b;x.setDate(x.getDate()+1)){const g=x.getDay();if(g&&g<6)n++}return n}
-function tgt(p,a,b){const T=S.cfg.targets;if(p==='day')return[T.callDay,T.visitDay];if(p==='week')return[T.callWeek,T.visitWeek];return[T.callMonth,T.visitMonth]}
-const rowVisit=w=>w.visit!=null?w.visit:TYPES.reduce((s,[k])=>s+(w[k]||0),0);
-const rowKm=w=>Math.max(0,(w.kmAkhir||0)-(w.kmAwal||0));
-const NL={call:'Call',ekspansi:'Ekspansi',probing:'Probing',presentasi:'Presentasi',closing:'Closing',maintenance:'Maintenance'};
-const noteTxt=w=>(w.notes||(w.ket?[{j:'call',t:w.ket}]:[])).map(n=>(NL[n.j]||n.j)+': '+esc(n.t)).join('<br>');
-function agg(id,a,b){const r={call:0,visit:0,km:0};
- S.entries.forEach(d=>{if(d.member===id&&d.date>=a&&d.date<=b){if(d.kmAkhir!=null)r.km+=Math.max(0,(d.kmAkhir||0)-(d.kmAwal||0));(d.rows||[]).forEach(w=>{r.call+=w.call||0;r.visit+=rowVisit(w);r.km+=rowKm(w)})}});return r}
-const bar=(l,v,t)=>{const p=pct(v,t);return`<div class="bl"><span>${l}</span><span>${v}/${t} · ${p}%</span></div><div class="bar"><i style="width:${Math.min(100,p)}%;background:var(--${p>=100?'ok':p>=60?'wa':'no'})"></i></div>`};
-function pcard(title,r,t){return`<div class="card"><h4>${title}</h4>${bar('Call',r.call,t[0])}${bar('Visit',r.visit,t[1])}<p style="margin:6px 0 0">Total KM: <b>${r.km}</b></p></div>`}
-async function saveCfg(){try{await db.doc('config/main').set({members:S.cfg.members,adminPin:S.cfg.adminPin,targets:S.cfg.targets})}catch(e){alert('Gagal menyimpan: '+(e.message||e.code))}}
+  :root { --bg: #f4f6f9; --card: #fff; --tx: #1b2430; --mu: #667085; --bd: #e0e4ea; --pr: #1f6feb; --ok: #12a150; --wa: #d9822b; --no: #d92d20; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--tx); margin: 0; padding: 16px; box-sizing: border-box; }
+  .card { background: var(--card); border: 1px solid var(--bd); border-radius: 12px; padding: 20px; max-width: 500px; margin: 20px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+  h2 { margin-top: 0; font-size: 1.25rem; }
+  .form-group { margin-bottom: 16px; }
+  label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: var(--mu); }
+  input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--bd); background: var(--card); color: var(--tx); box-sizing: border-box; font-size: 1rem; }
+  button { background: var(--pr); color: #fff; border: none; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  button:hover { opacity: 0.9; }
+  .hidden { display: none; }
+  .info { font-size: 0.85rem; color: var(--mu); margin-top: 10px; }
+  .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; background: var(--pr); color: #fff; margin-bottom: 12px; }
+</style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-/* ---------- login ---------- */
-function login(){
- app.innerHTML=`<div class="card" style="max-width:380px;margin:30px auto"><h1>Aktivitas Sales</h1><label>Nama</label><select id="lu">${S.cfg.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}<option value="admin">Admin / Manager</option></select><label>PIN</label><input id="lp" type="password" inputmode="numeric" autocomplete="off"><button class="pr" id="lb">Masuk</button><p class="mu" id="le"></p><p class="mu">PIN awal: anggota 1234, admin/manager 0000. Segera ganti setelah masuk.</p></div>`;
- const go=()=>{const u=$('#lu').value,p=$('#lp').value;
-  if(u==='admin'){if(p===S.cfg.adminPin){me={role:'admin'};paint()}else $('#le').textContent='PIN salah.'}
-  else{const m=S.cfg.members.find(x=>x.id===u);if(m&&p===m.pin){me={role:'member',id:u};W.mid=u;paint()}else $('#le').textContent='PIN salah.'}};
- $('#lb').onclick=go;$('#lp').onkeydown=e=>{if(e.key==='Enter')go()}}
-function paint(){LIVE=null;if(!me)return login();me.role==='admin'?adminPage():memberPage()}
-function logout(){me=null;paint()}
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAZqs-Jjn0AC0IA4RG0fy9QM4_PB1cZ1rU",
+    authDomain: "aktivitas-sales-indra.firebaseapp.com",
+    projectId: "aktivitas-sales-indra",
+    storageBucket: "aktivitas-sales-indra.firebasestorage.app",
+    messagingSenderId: "898240525411",
+    appId: "1:898240525411:web:db3cb48480d9c11530f456"
+  };
 
-/* ---------- form harian (13 mitra) ---------- */
-const NR=13;
-const NOTES=[['call','Call'],['ekspansi','Ekspansi'],['probing','Probing'],['presentasi','Presentasi'],['closing','Closing'],['maintenance','Maintenance']];
-const st=(k,v)=>`<div class="st"><button type="button" data-d="-1">−</button><input type="number" min="0" data-k="${k}" value="${v}" inputmode="numeric"><button type="button" data-d="1">+</button></div>`;
-const noteRow=n=>`<div class="nt"><select data-nj>${NOTES.map(([k,l])=>`<option value="${k}"${n.j===k?' selected':''}>${l}</option>`).join('')}</select><input data-nt placeholder="Hasil aktivitas" value="${esc(n.t||'')}"><button type="button" class="dg" data-rm>×</button></div>`;
-function form(el){
- const D=S.entries.find(x=>x.id===W.mid+'_'+W.d)||{},R=D.rows||[];
- const row=i=>{const w=R[i]||{};return{mitra:w.mitra||'',alamat:w.alamat||'',call:w.call||0,visit:rowVisit(w),kmAwal:w.kmAwal||0,kmAkhir:w.kmAkhir||0,notes:w.notes||(w.ket?[{j:'call',t:w.ket}]:[])}};
- const rows=[...Array(NR)].map((_,i)=>{const w=row(i),on=w.mitra||w.call||w.visit||w.kmAkhir;
-  return`<details class="card" data-i="${i}"${on||i===0?' open':''}><summary><b>Mitra ${i+1}</b> ${esc(w.mitra)}</summary>
-  <label>Nama mitra</label><input data-k="mitra" value="${esc(w.mitra)}">
-  <label>Alamat mitra</label><input data-k="alamat" value="${esc(w.alamat)}">
-  <label>Call</label>${st('call',w.call)}
-  <label>Visit</label>${st('visit',w.visit)}
-  <div class="grid"><div><label>KM awal</label>${st('kmAwal',w.kmAwal)}</div><div><label>KM akhir</label>${st('kmAkhir',w.kmAkhir)}</div></div>
-  <div class="tot">Total KM mitra: <b data-tk>0</b></div>
-  <label>Keterangan aktivitas</label><div>${w.notes.map(noteRow).join('')}</div><button type="button" data-addn>+ Tambah keterangan</button></details>`}).join('');
- el.innerHTML=`<div class="card tot" id="ts"></div>${rows}<button class="pr" id="sv">Simpan hari ini</button><span class="mu" id="fe"></span>`;
- const dd=i=>el.querySelector(`details[data-i="${i}"]`);
- const g=(i,k)=>dd(i).querySelector(`[data-k="${k}"]`).value;
- const num=(i,k)=>Math.max(0,+g(i,k)||0);
- const upd=()=>{let c=0,v=0,m=0,km=0;
-  for(let i=0;i<NR;i++){const k=Math.max(0,num(i,'kmAkhir')-num(i,'kmAwal'));dd(i).querySelector('[data-tk]').textContent=k;c+=num(i,'call');v+=num(i,'visit');km+=k;if(g(i,'mitra').trim())m++}
-  const t=tgt('day');$('#ts').innerHTML=`Mitra <b>${m}</b>/${NR} · Call <b>${c}</b>/${t[0]} · Visit <b>${v}</b>/${t[1]} · Total KM hari ini <b>${km}</b>`};
- el.onclick=ev=>{const t=ev.target,b=t.closest('button[data-d]');
-  if(b){const i=b.parentNode.querySelector('input');i.value=Math.max(0,(+i.value||0)+ +b.dataset.d);upd();return}
-  if(t.dataset.addn!==undefined){t.previousElementSibling.insertAdjacentHTML('beforeend',noteRow({j:'call'}));return}
-  if(t.dataset.rm!==undefined)t.parentNode.remove()};
- el.oninput=upd;upd();
- $('#sv').onclick=async()=>{const rows=[];
-  for(let i=0;i<NR;i++){
-   const notes=[...dd(i).querySelectorAll('.nt')].map(n=>({j:n.querySelector('[data-nj]').value,t:n.querySelector('[data-nt]').value.trim()})).filter(n=>n.t);
-   const w={mitra:g(i,'mitra').trim(),alamat:g(i,'alamat').trim(),call:num(i,'call'),visit:num(i,'visit'),kmAwal:num(i,'kmAwal'),kmAkhir:num(i,'kmAkhir'),notes};
-   if(!w.mitra&&(w.call||w.visit||w.kmAwal||w.kmAkhir||notes.length)){$('#fe').textContent=' Mitra '+(i+1)+': nama mitra wajib diisi jika ada aktivitas.';dd(i).open=true;return}
-   rows.push(w)}
-  try{await db.doc('days/'+W.mid+'_'+W.d).set({member:W.mid,date:W.d,rows});$('#fe').textContent=' Tersimpan.'}
-  catch(x){$('#fe').textContent=' Gagal menyimpan: '+(x.message||x.code)}}}
+  const app = initializeApp(FIREBASE_CONFIG);
+  const db = getFirestore(app);
 
-/* ---------- halaman kerja (anggota & edit oleh admin) ---------- */
-function work(root,fixed){
- if(!LOADED){root.innerHTML='<p class="mu">Memuat data…</p>';return}
- if(fixed)W.mid=fixed;else if(!S.cfg.members.some(m=>m.id===W.mid))W.mid=(S.cfg.members[0]||{}).id;
- root.innerHTML=`<div class="row">${fixed?'':`<select id="wm">${S.cfg.members.map(m=>`<option value="${m.id}"${m.id===W.mid?' selected':''}>${esc(m.name)}</option>`).join('')}</select>`}<input type="date" id="wd" value="${W.d}"></div><div id="live" style="margin:12px 0"></div><div id="fm"></div>`;
- const nf=()=>form($('#fm'));
- if(!fixed)$('#wm').onchange=e=>{W.mid=e.target.value;nf();LIVE()};
- $('#wd').onchange=e=>{W.d=e.target.value||today();nf();LIVE()};
- $('#live').onclick=e=>{const g=e.target.dataset.go;if(g){W.d=g;$('#wd').value=g;nf();LIVE();$('#fm').scrollIntoView({behavior:'smooth'})}};
- nf();
- LIVE=()=>{
-  if(!W.mid){$('#live').innerHTML='<p class="mu">Belum ada anggota.</p>';return}
-  const[ma,mb,x,y]=rng('month',W.d),r=agg(W.mid,ma,mb),T=S.cfg.targets,raw=bbmRaw(r.km),cl=bbm(r.km);
-  const ds=S.entries.filter(d=>d.member===W.mid&&d.date>=ma&&d.date<=mb).sort((p,q)=>q.date.localeCompare(p.date));
-  const pm={};let trs='';
-  ds.forEach(d=>(d.rows||[]).forEach(w=>{if(!w.mitra)return;const k=w.mitra.trim().toLowerCase(),o=pm[k]||(pm[k]={n:w.mitra.trim(),c:0,v:0,km:0});o.c+=w.call||0;o.v+=rowVisit(w);o.km+=rowKm(w);
-   trs+=`<tr><td><button data-go="${d.date}" style="margin:0;padding:3px 8px">${d.date}</button></td><td>${esc(w.mitra)}</td><td>${w.call||0}</td><td>${rowVisit(w)}</td><td>${rowKm(w)}</td><td style="white-space:normal;min-width:200px">${noteTxt(w)||'-'}</td></tr>`}));
-  const pr=Object.values(pm).sort((p,q)=>q.v+q.c-p.v-p.c).map(o=>`<tr><td>${esc(o.n)}</td><td>${o.c}</td><td>${o.v}</td><td>${o.km}</td></tr>`).join('');
-  $('#live').innerHTML=`<div class="cards">${pcard('Rekap bulan '+ma.slice(0,7),r,tgt('month',x,y))}<div class="card"><h4>Klaim BBM bulan ${ma.slice(0,7)}</h4><div class="big">${rp(cl)}</div><p class="mu">${r.km} KM ÷ ${T.kmDiv} × ${rp(T.rpKm)} = ${rp(raw)}${raw>T.pagu?' (dibatasi pagu)':''}<br>Pagu maksimal ${rp(T.pagu)}</p></div></div>
-  <div class="card sc" style="margin-top:12px"><h3>Aktivitas harian per mitra</h3>${trs?`<table style="min-width:360px"><tr><th>Tanggal</th><th>Mitra</th><th>Call</th><th>Visit</th><th>KM</th><th>Keterangan aktivitas</th></tr>${trs}</table>`:'<p class="mu">Belum ada data bulan ini.</p>'}</div>
-  <div class="card sc"><h3>Total per mitra bulan ini</h3>${pr?`<table style="min-width:360px"><tr><th>Mitra</th><th>Call</th><th>Visit</th><th>KM</th></tr>${pr}</table>`:'<p class="mu">Belum ada data.</p>'}</div>`}
- LIVE()}
+  window.handleLogin = function() {
+    const pin = document.getElementById('pin').value;
+    const status = document.getElementById('status');
+    
+    if (pin === "0000") {
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('admin-section').classList.remove('hidden');
+    } else if (pin === "1234") {
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('member-section').classList.remove('hidden');
+    } else {
+      status.innerText = "PIN Salah! Gunakan 1234 atau 0000";
+      status.style.color = "var(--no)";
+    }
+  };
 
-/* ---------- anggota ---------- */
-function memberPage(){
- const m=S.cfg.members.find(x=>x.id===me.id);
- app.innerHTML=`<div class="row"><h1>${esc(m?m.name:'')}</h1><div><button id="pn">Ganti / Reset PIN</button><button id="lo">Keluar</button></div></div><div id="pp"></div><div id="wk"></div>`;
- $('#lo').onclick=logout;
- $('#pn').onclick=()=>{$('#pp').innerHTML=`<div class="card"><label>PIN baru (minimal 4 angka)</label><input id="np" type="password" inputmode="numeric"><button class="pr" id="ps">Simpan PIN</button><button id="pr">Reset ke 1234</button><span class="mu" id="pm"></span></div>`;
-  const set=async p=>{const mm=S.cfg.members.find(x=>x.id===me.id);mm.pin=p;await saveCfg();$('#pm').textContent=' PIN diperbarui.'};
-  $('#ps').onclick=()=>{const p=$('#np').value.trim();if(p.length<4)return $('#pm').textContent=' Minimal 4 karakter.';set(p)};
-  $('#pr').onclick=()=>set('1234')};
- work($('#wk'),me.id)}
+  window.logout = function() {
+    document.getElementById('login-section').classList.remove('hidden');
+    document.getElementById('admin-section').classList.add('hidden');
+    document.getElementById('member-section').classList.add('hidden');
+    document.getElementById('pin').value = '';
+    document.getElementById('status').innerText = '';
+  };
+</script>
+</head>
+<body>
+  <!-- TAMPILAN LOGIN -->
+  <div id="login-section" class="card">
+    <h2>Aplikasi Aktivitas Sales</h2>
+    <div class="form-group">
+      <label for="pin">Masukkan PIN Masuk:</label>
+      <input type="password" id="pin" placeholder="Masukkan PIN">
+    </div>
+    <button onclick="handleLogin()">Masuk Aplikasi</button>
+    <p id="status" class="info"></p>
+    <hr style="border:0; border-top:1px solid var(--bd); margin:20px 0;">
+    <p class="info"><b>PIN Default:</b><br>• Anggota: <b>1234</b>[span_11](start_span)[span_11](end_span)[span_12](start_span)[span_12](end_span)<br>• Admin / Manager: <b>0000</b>[span_13](start_span)[span_13](end_span)[span_14](start_span)[span_14](end_span)</p>
+  </div>
 
-/* ---------- admin ---------- */
-function adminPage(){
- const tabs=[['dash','Dashboard'],['edit','Edit Aktivitas'],['mon','Monitoring Mitra'],['mem','Target, Anggota & PIN']];
- app.innerHTML=`<div class="row"><h1>Admin / Manager</h1><button id="lo">Keluar</button></div><div class="tabs">${tabs.map(([k,n])=>`<button data-t="${k}" class="${A.tab===k?'on':''}">${n}</button>`).join('')}</div><div id="tb"></div>`;
- $('#lo').onclick=logout;
- document.querySelector('.tabs').onclick=e=>{if(e.target.dataset.t){A.tab=e.target.dataset.t;adminPage()}};
- ({dash,edit:()=>work($('#tb')),mon,mem})[A.tab]($('#tb'))}
-function dash(root){
- root.innerHTML=`<div class="row"><div>${[['day','Harian'],['week','Mingguan'],['month','Bulanan']].map(([p,n])=>`<button data-p="${p}" class="${A.p===p?'on':''}">${n}</button>`).join('')}</div><input type="date" id="ad" value="${A.d}" style="max-width:180px"></div><div id="live" style="margin-top:12px"></div>`;
- root.querySelector('.row').onclick=e=>{if(e.target.dataset.p){A.p=e.target.dataset.p;dash(root)}};
- $('#ad').onchange=e=>{A.d=e.target.value||today();LIVE()};
- LIVE=()=>{
-  const[a,b,x,y]=rng(A.p,A.d),[tc,tv]=tgt(A.p,x,y),[ma]=rng('month',A.d),[,mb]=rng('month',A.d),T=S.cfg.targets;
-  const rows=S.cfg.members.map(m=>{const r=agg(m.id,a,b),pc=pct(r.call,tc),pv=pct(r.visit,tv),avg=(Math.min(100,pc)+Math.min(100,pv))/2,mk=agg(m.id,ma,mb).km;return{m,r,pc,pv,avg,mk,raw:bbmRaw(mk),cl:bbm(mk)}});
-  const team=rows.length?Math.round(rows.reduce((s,r)=>s+r.avg,0)/rows.length):0;
-  const sm=k=>rows.reduce((s,r)=>s+k(r),0);
-  $('#live').innerHTML=`<div class="cards"><div class="card"><h4>Pencapaian Admin/Manager (rata-rata anggota)</h4><div class="big">${team}%</div><p class="mu">${a} s/d ${b} · target per anggota: call ${tc}, visit ${tv}</p></div><div class="card"><h4>Total klaim BBM bulan ${ma.slice(0,7)}</h4><div class="big">${rp(sm(r=>r.cl))}</div><p class="mu">Per anggota: total KM ÷ ${T.kmDiv} × ${rp(T.rpKm)}, maksimal ${rp(T.pagu)}</p></div></div>
-  <div class="card sc" style="margin-top:12px"><table><tr><th>Anggota</th><th>Call</th><th>% Call</th><th>Visit</th><th>% Visit</th><th>Rata-rata</th><th>Total KM bulan</th><th>Konversi Rp</th><th>Klaim BBM (maks pagu)</th></tr>${rows.map(({m,r,pc,pv,avg,mk,raw,cl})=>`<tr><td><b>${esc(m.name)}</b></td><td>${r.call}/${tc}</td><td>${pc}%</td><td>${r.visit}/${tv}</td><td>${pv}%</td><td><b>${Math.round(avg)}%</b></td><td>${mk}</td><td>${rp(raw)}</td><td><b>${rp(cl)}</b>${raw>T.pagu?' <span class="mu">(pagu)</span>':''}</td></tr>`).join('')}<tr><td><b>Total</b></td><td>${sm(r=>r.r.call)}</td><td></td><td>${sm(r=>r.r.visit)}</td><td></td><td></td><td>${sm(r=>r.mk)}</td><td>${rp(sm(r=>r.raw))}</td><td><b>${rp(sm(r=>r.cl))}</b></td></tr></table></div><p class="mu">Target bulanan per anggota memakai angka target per bulan di pengaturan. Persentase per anggota dibatasi maksimal 100% saat dirata-rata. Target dan pagu dapat diubah di tab Target, Anggota &amp; PIN.</p>`};
- LIVE()}
-let MO={m:'',mon:today().slice(0,7)};
-function mon(root){
- if(!LOADED){root.innerHTML='<p class="mu">Memuat data…</p>';return}
- root.innerHTML=`<div class="row"><select id="mq"><option value="">Semua anggota</option>${S.cfg.members.map(m=>`<option value="${m.id}"${m.id===MO.m?' selected':''}>${esc(m.name)}</option>`).join('')}</select><input type="month" id="mo" value="${MO.mon}" style="max-width:180px"></div><div id="live" style="margin-top:12px"></div>`;
- $('#mq').onchange=e=>{MO.m=e.target.value;LIVE()};
- $('#mo').onchange=e=>{MO.mon=e.target.value||today().slice(0,7);LIVE()};
- LIVE=()=>{
-  const ds=S.entries.filter(d=>d.date.slice(0,7)===MO.mon&&(!MO.m||d.member===MO.m)).sort((p,q)=>p.date.localeCompare(q.date)||mname(p.member).localeCompare(mname(q.member)));
-  let tr='',c=0,v=0,n=0;
-  ds.forEach(d=>(d.rows||[]).forEach(w=>{if(!w.mitra)return;const vv=rowVisit(w);n++;c+=w.call||0;v+=vv;
-   tr+=`<tr><td>${d.date}</td>${MO.m?'':`<td>${esc(mname(d.member))}</td>`}<td>${esc(w.mitra)}</td><td>${[w.call?'Call '+w.call:'',vv?'Visit '+vv:''].filter(Boolean).join(' · ')||'-'}</td><td style="white-space:normal;min-width:220px">${noteTxt(w)||'-'}</td></tr>`}));
-  $('#live').innerHTML=`<div class="card"><h4>Rekap ${MO.mon}${MO.m?' · '+esc(mname(MO.m)):''}</h4><p class="mu">${n} aktivitas mitra · Call ${c} · Visit ${v}</p></div><div class="card sc"><table><tr><th>Tanggal</th>${MO.m?'':'<th>Anggota</th>'}<th>Nama mitra</th><th>Aktivitas</th><th>Keterangan aktivitas</th></tr>${tr||'<tr><td colspan="5" class="mu">Belum ada data.</td></tr>'}</table></div>`};
- LIVE()}
-let MM='';
-const TF=[['callDay','Target call per hari'],['callWeek','Target call per minggu'],['visitDay','Target visit per hari'],['visitWeek','Target visit per minggu'],['callMonth','Target call per bulan (per anggota)'],['visitMonth','Target visit per bulan (per anggota)'],['pagu','Pagu klaim BBM per bulan (Rp)'],['kmDiv','Pembagi KM'],['rpKm','Nilai per pembagi KM (Rp)']];
-function mem(root){
- LIVE=()=>{const T=S.cfg.targets;
-  root.innerHTML=`<p class="mu" id="mm">${esc(MM)}</p><div class="card"><h3>Target &amp; klaim BBM</h3><div class="grid">${TF.map(([k,l])=>`<div><label>${l}</label><input type="number" min="0" data-tg="${k}" value="${T[k]}"></div>`).join('')}</div><button class="pr" id="tg">Simpan target</button><p class="mu">Target bulanan diisi langsung per anggota (awal: call 200, visit 60). Klaim BBM = total KM bulan ÷ pembagi KM × nilai, maksimal pagu.</p></div>
-  <div class="card"><h3>Anggota</h3>${S.cfg.members.map(m=>`<div class="ent row"><input value="${esc(m.name)}" data-n="${m.id}" style="max-width:260px"><div><button data-r="${m.id}">Reset PIN (1234)</button><button class="dg" data-x="${m.id}">Hapus</button></div></div>`).join('')}<div class="row" style="margin-top:10px"><input id="nm" placeholder="Nama anggota baru" style="max-width:260px"><button class="pr" id="add">Tambah anggota</button></div><p class="mu">Menghapus anggota tidak menghapus riwayat aktivitasnya.</p></div>
-  <div class="card"><h3>PIN Admin / Manager</h3><input id="ap" type="password" placeholder="PIN baru (min. 4 karakter)" style="max-width:260px"><button class="pr" id="aps">Simpan PIN</button><button id="apr">Reset ke 0000</button></div>`;
-  const say=t=>{MM=t;$('#mm').textContent=t};
-  root.onchange=async e=>{const id=e.target.dataset.n;if(id){const m=S.cfg.members.find(x=>x.id===id),v=e.target.value.trim();if(m&&v){m.name=v;say('Nama diperbarui.');await saveCfg()}}};
-  root.onclick=async e=>{const t=e.target,d=t.dataset;
-   if(t.id==='tg'){const n={};for(const i of root.querySelectorAll('[data-tg]'))n[i.dataset.tg]=Math.max(0,+i.value||0);if(!n.kmDiv)return say('Pembagi KM harus lebih dari 0.');S.cfg.targets=n;say('Target disimpan.');await saveCfg()}
-   if(d.r){S.cfg.members.find(x=>x.id===d.r).pin='1234';say('PIN anggota direset ke 1234.');await saveCfg()}
-   if(d.x){if(!t.dataset.arm){t.dataset.arm=1;t.textContent='Yakin hapus?';return}S.cfg.members=S.cfg.members.filter(x=>x.id!==d.x);say('Anggota dihapus.');await saveCfg()}
-   if(t.id==='add'){const v=$('#nm').value.trim();if(v){S.cfg.members.push({id:'m'+Date.now().toString(36),name:v,pin:'1234'});say('Anggota ditambahkan.');await saveCfg()}}
-   if(t.id==='aps'){const v=$('#ap').value.trim();if(v.length<4)return say('PIN minimal 4 karakter.');S.cfg.adminPin=v;say('PIN admin diperbarui.');await saveCfg()}
-   if(t.id==='apr'){S.cfg.adminPin='0000';say('PIN admin direset ke 0000.');await saveCfg()}}};
- LIVE()}
+  <!-- TAMPILAN PANEL ADMIN -->
+  <div id="admin-section" class="card hidden">
+    <span class="badge">Panel Admin / Manager</span>
+    <h2>Kelola Anggota & Laporan</h2>
+    <p>Selamat datang di Panel Admin! Di sini Anda dapat memantau aktivitas sales dan mengelola data tim.</p>
+    <div class="form-group">
+      <label>Tambah Anggota Baru:</label>
+      <input type="text" placeholder="Nama Anggota Sales">
+    </div>
+    <button style="background:var(--ok);">+ Simpan Anggota</button>
+    <button onclick="logout()" style="background:var(--mu); margin-top:12px;">Keluar / Logout</button>
+  </div>
 
-/* ---------- mulai ---------- */
-(async()=>{
- if(!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey.startsWith('ISI')){app.innerHTML='<div class="card"><h3>Konfigurasi Firebase belum diisi</h3><p class="mu">Buka file index.html, cari FIREBASE_CONFIG di bagian atas script, lalu isi dengan konfigurasi dari proyek Firebase Anda. Lihat PANDUAN.md.</p></div>';return}
- const onErr=e=>{app.innerHTML='<div class="card"><h3>Gagal terhubung ke database</h3><p class="mu">Kode: '+esc(e.code||e.message)+'. Periksa konfigurasi Firebase dan aturan (Rules) Firestore.</p></div>'};
- try{firebase.initializeApp(FIREBASE_CONFIG);const fs=firebase.firestore();
-  db={doc:p=>{const r=fs.doc(p);return{set:d=>r.set(d),delete:()=>r.delete(),onSnapshot:f=>r.onSnapshot(f,onErr)}},collection:c=>({onSnapshot:f=>fs.collection(c).onSnapshot(f,onErr)})}}catch(e){onErr(e);return}
- login();
- db.doc('config/main').onSnapshot(s=>{if(s.exists){const d=s.data();S.cfg={members:d.members||[],adminPin:d.adminPin||'0000',targets:Object.assign({},T0,d.targets)}}
-  if(!me){const p=$('#lp');if(!p||!p.value)login()}else if(me.role==='admin'&&A.tab==='mem'){const a=document.activeElement;if(!a||a.tagName!=='INPUT')LIVE&&LIVE()}else if(LIVE&&me.role==='admin'&&A.tab==='dash')LIVE()});
- db.collection('days').onSnapshot(q=>{S.entries=q.docs.map(d=>Object.assign({id:d.id},d.data()));const first=!LOADED;LOADED=true;
-  if(first&&me)paint();else if(LIVE&&me&&!(me.role==='admin'&&A.tab==='mem'))LIVE()});
-})();
-</script></body></html>
+  <!-- TAMPILAN PANEL ANGGOTA -->
+  <div id="member-section" class="card hidden">
+    <span class="badge" style="background:var(--ok);">Panel Anggota</span>
+    <h2>Input Aktivitas Harian</h2>
+    <div class="form-group">
+      <label>Rincian Aktivitas Sales:</label>
+      <input type="text" placeholder="Contoh: Kunjungan Klien A">
+    </div>
+    <button>Kirim Laporan</button>
+    <button onclick="logout()" style="background:var(--mu); margin-top:12px;">Keluar / Logout</button>
+  </div>
+</body>
+</html>
